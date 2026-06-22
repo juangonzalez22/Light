@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: dea6b9c1bcbc448ad97333c375aada1d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 136594
+  packageName: Skybox add-on
+  packageVersion: 1.0
+  assetPath: Assets/Skybox add-on/Skyboxes/Skybox_9.mat
+  uploadId: 291275

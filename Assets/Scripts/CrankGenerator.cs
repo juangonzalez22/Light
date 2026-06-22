@@ -8,6 +8,7 @@ public class CrankGenerator : MonoBehaviour
     public Collider knobCollider;
     public LightPivotController lightPivot;
     public LighthouseEnergy energy;
+    public LighthouseHealth lighthouseHealth;
 
     [Header("Giro")]
     [Tooltip("1 o -1. Si gira al revés de lo que quieres, cambia este valor.")]
@@ -29,6 +30,14 @@ public class CrankGenerator : MonoBehaviour
 
     private void Update()
     {
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+        {
+            if (isHolding)
+                Release();
+
+            return;
+        }
+
         if (playerCamera == null || lightPivot == null || Mouse.current == null)
             return;
 
@@ -71,7 +80,6 @@ public class CrankGenerator : MonoBehaviour
         isHolding = true;
         accumulatedAcceptedDegrees = 0f;
 
-        // Centro de la manivela en pantalla.
         screenCenter = playerCamera.WorldToScreenPoint(transform.position);
         previousMouseAngle = GetMouseAngle();
 
@@ -126,7 +134,6 @@ public class CrankGenerator : MonoBehaviour
         Vector2 mousePos = Mouse.current.position.ReadValue();
         Vector2 direction = mousePos - screenCenter;
 
-        // Evita problemas si el cursor cae exactamente en el centro.
         if (direction.sqrMagnitude < 0.001f)
             return previousMouseAngle;
 

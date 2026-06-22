@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LighthouseEnergy : MonoBehaviour
 {
@@ -7,6 +8,9 @@ public class LighthouseEnergy : MonoBehaviour
 
     [Tooltip("Cuánta energía se pierde por segundo mientras el faro está encendido.")]
     public float drainPerSecond = 2f;
+
+    [Header("UI")]
+    [SerializeField] private Slider energySlider;
 
     [Header("Estado")]
     [Tooltip("Mientras esto esté activo, no se drena energía.")]
@@ -22,6 +26,13 @@ public class LighthouseEnergy : MonoBehaviour
     private void Awake()
     {
         currentEnergy = maxEnergy;
+
+        if (energySlider != null)
+        {
+            energySlider.minValue = 0f;
+            energySlider.maxValue = maxEnergy;
+            energySlider.value = currentEnergy;
+        }
     }
 
     private void Update()
@@ -36,6 +47,8 @@ public class LighthouseEnergy : MonoBehaviour
 
         currentEnergy -= drainPerSecond * Time.deltaTime;
         currentEnergy = Mathf.Max(currentEnergy, 0f);
+
+        UpdateSlider();
     }
 
     public void SetDrainPaused(bool paused)
@@ -46,5 +59,12 @@ public class LighthouseEnergy : MonoBehaviour
     public void AddEnergy(float amount)
     {
         currentEnergy = Mathf.Clamp(currentEnergy + amount, 0f, maxEnergy);
+        UpdateSlider();
+    }
+
+    private void UpdateSlider()
+    {
+        if (energySlider != null)
+            energySlider.value = currentEnergy;
     }
 }

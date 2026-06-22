@@ -48,6 +48,9 @@ public class LightPivotController : MonoBehaviour
     [Header("Energía")]
     public LighthouseEnergy energy;
 
+    [Header("Vida")]
+    public LighthouseHealth lighthouseHealth;
+
     [Header("Recarga")]
     [SerializeField] private bool isRecharging;
 
@@ -67,7 +70,6 @@ public class LightPivotController : MonoBehaviour
     {
         if (cameraRig == null && Camera.main != null)
         {
-
             cameraRig = Camera.main.transform.parent != null ? Camera.main.transform.parent : Camera.main.transform;
         }
 
@@ -97,7 +99,6 @@ public class LightPivotController : MonoBehaviour
             }
         }
 
-        // Aseguramos el estado inicial de la recarga y del mouse
         if (isRecharging)
         {
             Cursor.lockState = CursorLockMode.None;
@@ -114,6 +115,12 @@ public class LightPivotController : MonoBehaviour
 
     private void Update()
     {
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+        {
+            UpdateVisuals(false);
+            return;
+        }
+
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
             TryToggleRechargeMode();
@@ -132,6 +139,9 @@ public class LightPivotController : MonoBehaviour
 
     public void TryToggleRechargeMode()
     {
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+            return;
+
         if (isCameraTransitioning)
             return;
 
@@ -143,8 +153,12 @@ public class LightPivotController : MonoBehaviour
 
     public void EnterRechargeMode()
     {
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+            return;
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
         if (isCameraTransitioning || isRecharging)
             return;
 
@@ -153,6 +167,9 @@ public class LightPivotController : MonoBehaviour
 
     public void ExitRechargeMode()
     {
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+            return;
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -164,6 +181,9 @@ public class LightPivotController : MonoBehaviour
 
     private void BeginCameraTransition(bool toRechargeMode)
     {
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+            return;
+
         if (cameraRig == null || normalCameraPoint == null || rechargeCameraPoint == null)
             return;
 
@@ -180,7 +200,6 @@ public class LightPivotController : MonoBehaviour
 
         Transform targetPoint = toRechargeMode ? rechargeCameraPoint : normalCameraPoint;
 
-        // Cancelamos cualquier tween previo para que no se peleen entre sí.
         LeanTween.cancel(cameraRig.gameObject);
 
         LeanTween.move(cameraRig.gameObject, targetPoint.position, cameraTransitionDuration)
@@ -196,9 +215,12 @@ public class LightPivotController : MonoBehaviour
         isCameraTransitioning = false;
         isRecharging = targetRechargeState;
 
-        if (!isRecharging && energy != null)
+        if (lighthouseHealth == null || lighthouseHealth.IsAlive)
         {
-            energy.SetDrainPaused(false);
+            if (!isRecharging && energy != null)
+            {
+                energy.SetDrainPaused(false);
+            }
         }
 
         RefreshVisuals();
@@ -206,6 +228,9 @@ public class LightPivotController : MonoBehaviour
 
     private void SetRechargeState(bool active)
     {
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+            return;
+
         isRecharging = active;
 
         if (energy != null)
@@ -234,7 +259,9 @@ public class LightPivotController : MonoBehaviour
 
     private void RefreshVisuals()
     {
-        bool canShow = !isRecharging && !isCameraTransitioning && (energy == null || energy.IsOn);
+        bool canShow = lighthouseHealth == null || lighthouseHealth.IsAlive;
+        canShow = canShow && !isRecharging && !isCameraTransitioning && (energy == null || energy.IsOn);
+
         UpdateVisuals(canShow);
     }
 
