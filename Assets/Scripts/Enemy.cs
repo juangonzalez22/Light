@@ -57,6 +57,21 @@ public class Enemy : MonoBehaviour
             audioSource = GetComponent<AudioSource>();
 
         lightPivot = FindObjectOfType<LightPivotController>();
+
+        // Buscar el primer LighthouseHealth de la escena y asignarlo como target
+        if (lighthouseHealth == null)
+        {
+            lighthouseHealth = FindObjectOfType<LighthouseHealth>();
+        }
+
+        if (lighthouseHealth != null)
+        {
+            target = lighthouseHealth.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Enemy: no se encontró ningún objeto con LighthouseHealth en la escena.");
+        }
     }
 
     private void Update()
@@ -64,6 +79,9 @@ public class Enemy : MonoBehaviour
         if (isDead) return;
 
         if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
+            return;
+
+        if (target == null)
             return;
 
         if (!reachedTarget)
@@ -120,7 +138,7 @@ public class Enemy : MonoBehaviour
 
     private void HandleFootsteps()
     {
-        if (audioSource == null || footstepSound == null) return;
+        if (audioSource == null || footstepSound == null || target == null) return;
 
         footstepTimer += Time.deltaTime;
 
@@ -128,10 +146,7 @@ public class Enemy : MonoBehaviour
         {
             footstepTimer = 0f;
 
-            float distance = target != null ? Vector3.Distance(transform.position, target.position) : 0f;
-            float maxDistance = GetComponent<Collider>() != null
-                ? Vector3.Distance(transform.position, target.position)
-                : maxDamageDistance;
+            float distance = Vector3.Distance(transform.position, target.position);
 
             // A menor distancia al objetivo, mayor volumen
             float t = 1f - Mathf.Clamp01(distance / maxDamageDistance);
