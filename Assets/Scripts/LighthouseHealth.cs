@@ -9,6 +9,17 @@ public class LighthouseHealth : MonoBehaviour
     [Header("UI")]
     [SerializeField] private Slider healthSlider;
 
+    [Header("Efectos Visuales")]
+    [SerializeField] private Shake objectToShake;
+    [SerializeField] private float damageShakeDuration = 0.2f;
+    [SerializeField] private float damageShakeIntensity = 0.3f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip damageSound;
+    [SerializeField] private float minPitch = 0.9f; // Tono mínimo (más grave)
+    [SerializeField] private float maxPitch = 1.1f; // Tono máximo (más agudo)
+
     [Header("Debug")]
     [SerializeField] private bool showDebugMessages = true;
 
@@ -32,6 +43,11 @@ public class LighthouseHealth : MonoBehaviour
             healthSlider.value = currentHealth;
         }
 
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+
         if (showDebugMessages)
         {
             Debug.Log($"LighthouseHealth iniciada: {currentHealth}/{maxHealth}");
@@ -47,6 +63,20 @@ public class LighthouseHealth : MonoBehaviour
         currentHealth = Mathf.Max(currentHealth, 0f);
 
         UpdateSlider();
+
+        // --- EFECTOS VISUALES Y SONOROS ---
+        
+        if (objectToShake != null)
+        {
+            objectToShake.TriggerShake(damageShakeDuration, damageShakeIntensity);
+        }
+
+        if (audioSource != null && damageSound != null)
+        {
+            // Cambiamos el pitch aleatoriamente entre los valores definidos
+            audioSource.pitch = Random.Range(minPitch, maxPitch);
+            audioSource.PlayOneShot(damageSound); 
+        }
 
         if (showDebugMessages)
         {

@@ -22,20 +22,47 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float attackDamage = 5f;
     [SerializeField] private float attackInterval = 1f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip hitSound;
+    [SerializeField] private AudioClip deathSound;
+    [SerializeField] private float minPitch = 0.8f;
+    [SerializeField] private float maxPitch = 2.0f;
+
+    [Header("Sonido de pasos")]
+    [SerializeField] private AudioClip footstepSound;
+    [SerializeField] private float footstepInterval = 0.5f;
+    [SerializeField] private float footstepMinPitch = 0.85f;
+    [SerializeField] private float footstepMaxPitch = 1.15f;
+    [SerializeField] private float footstepMinVolume = 0.05f;
+    [SerializeField] private float footstepMaxVolume = 1f;
+
     [Header("Estado")]
     [SerializeField] private bool reachedTarget;
     [SerializeField] private bool insideDamageZone;
     [SerializeField] private float damageTimer;
     [SerializeField] private float attackTimer;
 
+    private bool isDead = false;
+    private float footstepTimer = 0f;
+    private LightPivotController lightPivot;
+
+    private bool CanTakeDamage => lightPivot == null || (!lightPivot.IsRecharging && !lightPivot.IsCameraTransitioning);
+
     private void Awake()
     {
         currentHealth = maxHealth;
-        Debug.Log($"Enemy creado. Vida: {currentHealth}");
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        lightPivot = FindObjectOfType<LightPivotController>();
     }
 
     private void Update()
     {
+        if (isDead) return;
+
         if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
             return;
 
@@ -52,6 +79,8 @@ public class Enemy : MonoBehaviour
                 reachedTarget = true;
                 Debug.Log("Enemy llegó al objetivo.");
             }
+
+            HandleFootsteps();
         }
         else
         {
@@ -63,8 +92,6 @@ public class Enemy : MonoBehaviour
 
                 if (lighthouseHealth != null)
                 {
-                    Debug.Log($"Enemy atacó al faro por {attackDamage}.");
-
                     lighthouseHealth.TakeDamage(attackDamage);
                 }
                 else
@@ -74,7 +101,7 @@ public class Enemy : MonoBehaviour
             }
         }
 
-        if (insideDamageZone)
+        if (insideDamageZone && CanTakeDamage)
         {
             damageTimer += Time.deltaTime;
 
@@ -84,58 +111,104 @@ public class Enemy : MonoBehaviour
 
                 float distance = Vector3.Distance(transform.position, target.position);
                 float factor = 1f - Mathf.Clamp01(distance / maxDamageDistance);
-
                 float damage = Mathf.Lerp(minDamage, maxDamage, factor);
 
-                Debug.Log(
-                    $"Enemy recibe daño: {damage:F2} | Distancia: {distance:F2} | Vida antes: {currentHealth:F2}"
-                );
-
-                TakeDamage(damage);
+                TakeDamage(damage, factor);
             }
+        }
+    }
+
+    private void HandleFootsteps()
+    {
+        if (audioSource == null || footstepSound == null) return;
+
+        footstepTimer += Time.deltaTime;
+
+        if (footstepTimer >= footstepInterval)
+        {
+            footstepTimer = 0f;
+
+            float distance = target != null ? Vector3.Distance(transform.position, target.position) : 0f;
+            float maxDistance = GetComponent<Collider>() != null
+                ? Vector3.Distance(transform.position, target.position)
+                : maxDamageDistance;
+
+            // A menor distancia al objetivo, mayor volumen
+            float t = 1f - Mathf.Clamp01(distance / maxDamageDistance);
+            float volume = Mathf.Lerp(footstepMinVolume, footstepMaxVolume, t);
+
+            audioSource.pitch = Random.Range(footstepMinPitch, footstepMaxPitch);
+            audioSource.PlayOneShot(footstepSound, volume);
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
-            return;
-
-        Debug.Log($"Trigger Enter: {other.name}");
+        if (isDead) return;
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive) return;
 
         if (other.CompareTag("DamageZone"))
-        {
             insideDamageZone = true;
-            Debug.Log("Entró en DamageZone");
-        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
-            return;
-
-        Debug.Log($"Trigger Exit: {other.name}");
+        if (isDead) return;
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive) return;
 
         if (other.CompareTag("DamageZone"))
         {
             insideDamageZone = false;
             damageTimer = 0f;
-            Debug.Log("Salió de DamageZone");
         }
     }
 
-    public void TakeDamage(float amount)
+    public void ForceExitDamageZone()
     {
-        if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
-            return;
+        insideDamageZone = false;
+        damageTimer = 0f;
+    }
+
+    public void TakeDamage(float amount, float distanceFactor = 0.5f)
+    {
+        if (isDead) return;
+        if (!CanTakeDamage) return;
+        if (lighthouseHealth != null && !lighthouseHealth.IsAlive) return;
 
         currentHealth -= amount;
-        Debug.Log($"Vida actual del enemigo: {currentHealth:F2}");
 
         if (currentHealth <= 0f)
         {
-            Debug.Log("Enemy destruido.");
+            Die();
+        }
+        else
+        {
+            if (audioSource != null && hitSound != null)
+            {
+                audioSource.pitch = Mathf.Lerp(minPitch, maxPitch, distanceFactor);
+                audioSource.PlayOneShot(hitSound);
+            }
+        }
+    }
+
+    private void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+
+        Debug.Log("Enemy destruido.");
+
+        GetComponent<MeshRenderer>().enabled = false;
+        GetComponent<Collider>().enabled = false;
+
+        if (audioSource != null && deathSound != null)
+        {
+            audioSource.pitch = 1f;
+            audioSource.PlayOneShot(deathSound);
+            Destroy(gameObject, deathSound.length);
+        }
+        else
+        {
             Destroy(gameObject);
         }
     }

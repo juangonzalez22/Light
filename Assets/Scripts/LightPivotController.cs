@@ -22,11 +22,20 @@ public class LightPivotController : MonoBehaviour
     [Tooltip("Duración del movimiento de cámara.")]
     public float cameraTransitionDuration = 1f;
 
+    [Header("Sonidos de Transición")]
+    [Tooltip("El componente que reproducirá los sonidos de la cámara.")]
+    public AudioSource audioSource;
+    [Tooltip("Sonido al acercar la cámara (ida hacia la recarga).")]
+    public AudioClip transitionInSound;
+    [Tooltip("Sonido al alejar la cámara (vuelta a la vista normal).")]
+    public AudioClip transitionOutSound;
+
     [Header("Línea visual del rayo")]
     public LineRenderer beamLine;
 
     [Header("Referencias")]
     public Transform targetMarker;
+    public Collider markerCollider;
     public Transform lighthouseBase;
     public float markerGroundHeight = 0.05f;
 
@@ -191,6 +200,15 @@ public class LightPivotController : MonoBehaviour
         targetRechargeState = toRechargeMode;
         isRecharging = true;
 
+        if (audioSource != null)
+        {
+            AudioClip clipToPlay = toRechargeMode ? transitionInSound : transitionOutSound;
+            if (clipToPlay != null)
+            {
+                audioSource.PlayOneShot(clipToPlay);
+            }
+        }
+
         if (energy != null)
         {
             energy.SetDrainPaused(true);
@@ -267,7 +285,22 @@ public class LightPivotController : MonoBehaviour
 
     private void UpdateVisuals(bool shouldShow)
     {
+        // Si está recargando (o en transición), apagar todo inmediatamente y salir
+        if (isRecharging || isCameraTransitioning)
+        {
+            if (targetMarker != null) targetMarker.gameObject.SetActive(false);
+            if (markerCollider != null)
+            {
+                if (markerCollider.enabled)
+                    NotifyEnemiesExit();
+                markerCollider.enabled = false;
+            }
+            if (beamLine != null) beamLine.enabled = false;
+            return;
+        }
+
         if (targetMarker != null) targetMarker.gameObject.SetActive(shouldShow);
+        if (markerCollider != null) markerCollider.enabled = shouldShow;
         if (beamLine != null) beamLine.enabled = shouldShow;
 
         if (!shouldShow || targetMarker == null)
@@ -324,6 +357,22 @@ public class LightPivotController : MonoBehaviour
 
             beamLine.SetPosition(0, basePos);
             beamLine.SetPosition(1, targetPos);
+        }
+    }
+
+    private void NotifyEnemiesExit()
+    {
+        Collider[] hits = Physics.OverlapBox(
+            markerCollider.bounds.center,
+            markerCollider.bounds.extents,
+            markerCollider.transform.rotation
+        );
+
+        foreach (Collider hit in hits)
+        {
+            Enemy enemy = hit.GetComponent<Enemy>();
+            if (enemy != null)
+                enemy.ForceExitDamageZone();
         }
     }
 

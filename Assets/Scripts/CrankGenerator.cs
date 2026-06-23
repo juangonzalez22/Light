@@ -23,6 +23,12 @@ public class CrankGenerator : MonoBehaviour
     [Tooltip("Si está activo, el objeto gira visualmente junto con el mouse.")]
     public bool rotatePivotVisual = true;
 
+    [Header("Sonidos")]
+    [Tooltip("El componente que reproducirá el sonido.")]
+    public AudioSource audioSource;
+    [Tooltip("El clip de sonido que sonará en cada media vuelta de recarga.")]
+    public AudioClip crankSound;
+
     private bool isHolding;
     private float previousMouseAngle;
     private float accumulatedAcceptedDegrees;
@@ -115,6 +121,9 @@ public class CrankGenerator : MonoBehaviour
             {
                 energy.AddEnergy(energyPerHalfTurn);
             }
+            
+            // Reproducimos el sonido cada vez que se completa una vuelta/media vuelta válida
+            PlayCrankSound();
 
             Debug.Log("Media vuelta completa -> energía añadida");
         }
@@ -138,5 +147,14 @@ public class CrankGenerator : MonoBehaviour
             return previousMouseAngle;
 
         return Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+    }
+
+    private void PlayCrankSound()
+    {
+        if (audioSource != null && crankSound != null)
+        {
+            // PlayOneShot permite que el sonido se superponga si giras muy rápido
+            audioSource.PlayOneShot(crankSound);
+        }
     }
 }
