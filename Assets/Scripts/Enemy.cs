@@ -58,7 +58,6 @@ public class Enemy : MonoBehaviour
 
         lightPivot = FindObjectOfType<LightPivotController>();
 
-        // Buscar el primer LighthouseHealth de la escena y asignarlo como target
         if (lighthouseHealth == null)
         {
             lighthouseHealth = FindObjectOfType<LighthouseHealth>();
@@ -110,7 +109,7 @@ public class Enemy : MonoBehaviour
 
                 if (lighthouseHealth != null)
                 {
-                    lighthouseHealth.TakeDamage(attackDamage);
+                    lighthouseHealth.TakeDamage(attackDamage, DamageType.Melee);
                 }
                 else
                 {
@@ -148,7 +147,6 @@ public class Enemy : MonoBehaviour
 
             float distance = Vector3.Distance(transform.position, target.position);
 
-            // A menor distancia al objetivo, mayor volumen
             float t = 1f - Mathf.Clamp01(distance / maxDamageDistance);
             float volume = Mathf.Lerp(footstepMinVolume, footstepMaxVolume, t);
 

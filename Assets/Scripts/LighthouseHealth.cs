@@ -1,6 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum DamageType
+{
+    Melee,
+    Ranged,
+    Explosive
+}
+
 public class LighthouseHealth : MonoBehaviour
 {
     [Header("Vida")]
@@ -9,16 +16,34 @@ public class LighthouseHealth : MonoBehaviour
     [Header("UI")]
     [SerializeField] private Slider healthSlider;
 
-    [Header("Efectos Visuales")]
+    [Header("Shake - Melee")]
     [SerializeField] private Shake objectToShake;
-    [SerializeField] private float damageShakeDuration = 0.2f;
-    [SerializeField] private float damageShakeIntensity = 0.3f;
+    [SerializeField] private float meleeShakeDuration = 0.2f;
+    [SerializeField] private float meleeShakeIntensity = 0.3f;
 
-    [Header("Audio")]
+    [Header("Shake - Ranged")]
+    [SerializeField] private float rangedShakeDuration = 0.12f;
+    [SerializeField] private float rangedShakeIntensity = 0.15f;
+
+    [Header("Shake - Explosive")]
+    [SerializeField] private float explosiveShakeDuration = 0.6f;
+    [SerializeField] private float explosiveShakeIntensity = 1.0f;
+
+    [Header("Audio - Melee")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip damageSound;
-    [SerializeField] private float minPitch = 0.9f; // Tono mínimo (más grave)
-    [SerializeField] private float maxPitch = 1.1f; // Tono máximo (más agudo)
+    [SerializeField] private AudioClip meleeDamageSound;
+    [SerializeField] private float meleeMinPitch = 0.9f;
+    [SerializeField] private float meleeMaxPitch = 1.1f;
+
+    [Header("Audio - Ranged")]
+    [SerializeField] private AudioClip rangedDamageSound;
+    [SerializeField] private float rangedMinPitch = 1.0f;
+    [SerializeField] private float rangedMaxPitch = 1.2f;
+
+    [Header("Audio - Explosive")]
+    [SerializeField] private AudioClip explosiveDamageSound;
+    [SerializeField] private float explosiveMinPitch = 0.95f;
+    [SerializeField] private float explosiveMaxPitch = 1.05f;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugMessages = true;
@@ -54,7 +79,7 @@ public class LighthouseHealth : MonoBehaviour
         }
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, DamageType damageType)
     {
         if (!isAlive)
             return;
@@ -64,24 +89,12 @@ public class LighthouseHealth : MonoBehaviour
 
         UpdateSlider();
 
-        // --- EFECTOS VISUALES Y SONOROS ---
-        
-        if (objectToShake != null)
-        {
-            objectToShake.TriggerShake(damageShakeDuration, damageShakeIntensity);
-        }
-
-        if (audioSource != null && damageSound != null)
-        {
-            // Cambiamos el pitch aleatoriamente entre los valores definidos
-            audioSource.pitch = Random.Range(minPitch, maxPitch);
-            audioSource.PlayOneShot(damageSound); 
-        }
+        ApplyDamageEffects(damageType);
 
         if (showDebugMessages)
         {
             Debug.Log(
-                $"Lighthouse recibió {amount:F1} de daño. Vida actual: {currentHealth:F1}/{maxHealth}"
+                $"Lighthouse recibió {amount:F1} de daño ({damageType}). Vida actual: {currentHealth:F1}/{maxHealth}"
             );
         }
 
@@ -91,12 +104,87 @@ public class LighthouseHealth : MonoBehaviour
         }
     }
 
+    private void ApplyDamageEffects(DamageType damageType)
+    {
+        switch (damageType)
+        {
+            case DamageType.Melee:
+
+                if (objectToShake != null)
+                {
+                    objectToShake.TriggerShake(
+                        meleeShakeDuration,
+                        meleeShakeIntensity
+                    );
+                }
+
+                if (audioSource != null && meleeDamageSound != null)
+                {
+                    audioSource.pitch = Random.Range(
+                        meleeMinPitch,
+                        meleeMaxPitch
+                    );
+
+                    audioSource.PlayOneShot(meleeDamageSound);
+                }
+
+                break;
+
+            case DamageType.Ranged:
+
+                if (objectToShake != null)
+                {
+                    objectToShake.TriggerShake(
+                        rangedShakeDuration,
+                        rangedShakeIntensity
+                    );
+                }
+
+                if (audioSource != null && rangedDamageSound != null)
+                {
+                    audioSource.pitch = Random.Range(
+                        rangedMinPitch,
+                        rangedMaxPitch
+                    );
+
+                    audioSource.PlayOneShot(rangedDamageSound);
+                }
+
+                break;
+
+            case DamageType.Explosive:
+
+                if (objectToShake != null)
+                {
+                    objectToShake.TriggerShake(
+                        explosiveShakeDuration,
+                        explosiveShakeIntensity
+                    );
+                }
+
+                if (audioSource != null && explosiveDamageSound != null)
+                {
+                    audioSource.pitch = Random.Range(
+                        explosiveMinPitch,
+                        explosiveMaxPitch
+                    );
+
+                    audioSource.PlayOneShot(explosiveDamageSound);
+                }
+
+                break;
+        }
+    }
+
     public void Heal(float amount)
     {
         if (!isAlive)
             return;
 
-        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        currentHealth = Mathf.Min(
+            currentHealth + amount,
+            maxHealth
+        );
 
         UpdateSlider();
 
