@@ -43,14 +43,20 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float damageTimer;
     [SerializeField] private float attackTimer;
 
+    [SerializeField] private GameObject mesh;
+
+    private SkinnedMeshRenderer skin;
+
     private bool isDead = false;
     private float footstepTimer = 0f;
     private LightPivotController lightPivot;
 
     private bool CanTakeDamage => lightPivot == null || (!lightPivot.IsRecharging && !lightPivot.IsCameraTransitioning);
-
+    private Animator animator;
     private void Awake()
     {
+        skin = mesh.GetComponent<SkinnedMeshRenderer>();
+        animator = GetComponent<Animator>();
         currentHealth = maxHealth;
 
         if (audioSource == null)
@@ -73,6 +79,44 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        CreateEnemyVariant();
+    }
+
+    private void CreateEnemyVariant()
+    {
+        for (int i = 0; i < skin.sharedMesh.blendShapeCount; i++)
+        {
+            skin.SetBlendShapeWeight(i, 0f);
+        }
+
+        if (skin == null) return;
+        skin.SetBlendShapeWeight(1, Random.Range(0f, 100f));
+        skin.SetBlendShapeWeight(2, Random.Range(0f, 100f));
+        skin.SetBlendShapeWeight(3, Random.Range(0f, 100f));
+        skin.SetBlendShapeWeight(4, Random.Range(0f, 100f));
+        skin.SetBlendShapeWeight(5, Random.Range(0f, 100f));
+
+        float randomNumber = Random.Range(0f, 1f);
+        if (randomNumber < 0f)
+        {
+            skin.SetBlendShapeWeight(6, Random.Range(0f, 100f));
+        }
+        else
+        {
+            skin.SetBlendShapeWeight(0, Random.Range(0f, 100f));
+        }
+
+        Debug.Log("Características"+ "BlendShape 0: " + skin.GetBlendShapeWeight(0)
+            + "BlendShape 1: " + skin.GetBlendShapeWeight(1)+
+            "BlendShape 2: " + skin.GetBlendShapeWeight(2)+
+            "BlendShape 3: " + skin.GetBlendShapeWeight(3)+
+            "BlendShape 4: " + skin.GetBlendShapeWeight(4)+
+            "BlendShape 5: " + skin.GetBlendShapeWeight(5)+
+            "BlendShape 6: " + skin.GetBlendShapeWeight(6));
+    }
+
     private void Update()
     {
         if (isDead) return;
@@ -82,7 +126,12 @@ public class Enemy : MonoBehaviour
 
         if (target == null)
             return;
-
+        Vector3 direction = target.position - transform.position;
+        direction.y = 0f; 
+        if (direction != Vector3.zero)
+        {
+            transform.rotation = Quaternion.LookRotation(direction);
+        }
         if (!reachedTarget)
         {
             transform.position = Vector3.MoveTowards(
@@ -94,6 +143,8 @@ public class Enemy : MonoBehaviour
             if (Vector3.Distance(transform.position, target.position) <= stopDistance)
             {
                 reachedTarget = true;
+                if (animator != null)
+                    animator.SetBool("IsAttack", true);
                 Debug.Log("Enemy llegó al objetivo.");
             }
 
@@ -162,6 +213,7 @@ public class Enemy : MonoBehaviour
 
         if (other.CompareTag("DamageZone"))
             insideDamageZone = true;
+        Debug.Log("Enemigo siendo atacado");
     }
 
     private void OnTriggerExit(Collider other)
