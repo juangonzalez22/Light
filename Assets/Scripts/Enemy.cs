@@ -43,7 +43,15 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float damageTimer;
     [SerializeField] private float attackTimer;
 
+    [Header("GameObjects")]
     [SerializeField] private GameObject mesh;
+
+    [Header("Dissolve")]
+    [SerializeField] private float dissolveDuration = 2f;
+
+    private Material _dissolveMaterial;
+    private float _dissolveTimer = 0f;
+    private bool _isDissolving = false;
 
     private SkinnedMeshRenderer skin;
 
@@ -58,7 +66,7 @@ public class Enemy : MonoBehaviour
         skin = mesh.GetComponent<SkinnedMeshRenderer>();
         animator = GetComponent<Animator>();
         currentHealth = maxHealth;
-
+        _dissolveMaterial = skin.material;
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
 
@@ -108,17 +116,29 @@ public class Enemy : MonoBehaviour
             skin.SetBlendShapeWeight(0, Random.Range(0f, 100f));
         }
 
-        Debug.Log("Características"+ "BlendShape 0: " + skin.GetBlendShapeWeight(0)
-            + "BlendShape 1: " + skin.GetBlendShapeWeight(1)+
-            "BlendShape 2: " + skin.GetBlendShapeWeight(2)+
-            "BlendShape 3: " + skin.GetBlendShapeWeight(3)+
-            "BlendShape 4: " + skin.GetBlendShapeWeight(4)+
-            "BlendShape 5: " + skin.GetBlendShapeWeight(5)+
-            "BlendShape 6: " + skin.GetBlendShapeWeight(6));
+        //Debug.Log("Características"+ "BlendShape 0: " + skin.GetBlendShapeWeight(0)
+        //    + "BlendShape 1: " + skin.GetBlendShapeWeight(1)+
+        //    "BlendShape 2: " + skin.GetBlendShapeWeight(2)+
+        //    "BlendShape 3: " + skin.GetBlendShapeWeight(3)+
+        //    "BlendShape 4: " + skin.GetBlendShapeWeight(4)+
+        //    "BlendShape 5: " + skin.GetBlendShapeWeight(5)+
+        //    "BlendShape 6: " + skin.GetBlendShapeWeight(6));
     }
 
     private void Update()
     {
+
+        if (_isDissolving)
+        {
+            _dissolveTimer += Time.deltaTime;
+            float amount = Mathf.Clamp01(_dissolveTimer / dissolveDuration);
+            _dissolveMaterial.SetFloat("_DissolveAmount", amount);
+
+            if (amount >= 1f)
+                Destroy(gameObject);
+
+            return;
+        }
         if (isDead) return;
 
         if (lighthouseHealth != null && !lighthouseHealth.IsAlive)
@@ -213,7 +233,6 @@ public class Enemy : MonoBehaviour
 
         if (other.CompareTag("DamageZone"))
             insideDamageZone = true;
-        Debug.Log("Enemigo siendo atacado");
     }
 
     private void OnTriggerExit(Collider other)
@@ -261,20 +280,14 @@ public class Enemy : MonoBehaviour
         if (isDead) return;
         isDead = true;
 
-        Debug.Log("Enemy destruido.");
-
-        GetComponent<MeshRenderer>().enabled = false;
         GetComponent<Collider>().enabled = false;
 
         if (audioSource != null && deathSound != null)
         {
             audioSource.pitch = 1f;
             audioSource.PlayOneShot(deathSound);
-            Destroy(gameObject, deathSound.length);
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+
+        _isDissolving = true;
     }
 }
