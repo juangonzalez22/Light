@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 66c7fe3129cd23d41ae77591e731c745
+guid: cd757fb7e87545b4fa56bb290db11d14
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,7 +7,7 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.001
+      name: Material.005
     second: {fileID: 2100000, guid: c173887834439ef4a9d5ba7a96fbd260, type: 2}
   materials:
     materialImportMode: 2
@@ -36,9 +36,9 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Armature|attack
-      takeName: Armature|attack
-      internalID: -4799524434163024911
+      name: Armature.001|attack
+      takeName: Armature.001|attack
+      internalID: 7874570666074877753
       firstFrame: 0
       lastFrame: 250
       wrapMode: 0
@@ -65,11 +65,11 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Armature|walk
-      takeName: Armature|walk
-      internalID: 2824048918939311890
+      name: Armature.001|gigant_walk
+      takeName: Armature.001|gigant_walk
+      internalID: -5226158330719131569
       firstFrame: 0
-      lastFrame: 242
+      lastFrame: 85
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -94,19 +94,19 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Armature|throw
-      takeName: Armature|throw
-      internalID: -1689569913019878815
+      name: Armature.001|walk
+      takeName: Armature.001|walk
+      internalID: -6993090946979842912
       firstFrame: 0
-      lastFrame: 292
+      lastFrame: 242
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
-      loopTime: 1
-      loopBlend: 1
+      loopTime: 0
+      loopBlend: 0
       loopBlendOrientation: 0
       loopBlendPositionY: 0
       loopBlendPositionXZ: 0

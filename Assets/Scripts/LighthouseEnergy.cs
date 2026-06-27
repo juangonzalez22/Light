@@ -20,6 +20,10 @@ public class LighthouseEnergy : MonoBehaviour
     [Tooltip("Mientras esto esté activo, no se drena energía.")]
     [SerializeField] private bool drainPaused;
 
+    [Tooltip("Tiempo inicial en segundos durante el cual no se descarga energía.")]
+    public float initialNoDrainTime = 5f;
+    private float initialNoDrainTimer;
+
     [SerializeField] private float currentEnergy;
     private bool playedOutSound = false; // Controla que el sonido solo suene una vez al vaciarse
 
@@ -31,6 +35,8 @@ public class LighthouseEnergy : MonoBehaviour
     private void Awake()
     {
         currentEnergy = maxEnergy;
+        // Inicializamos el temporizador del periodo sin descarga
+        initialNoDrainTimer = initialNoDrainTime;
 
         if (energySlider != null)
         {
@@ -50,6 +56,18 @@ public class LighthouseEnergy : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.K))
         {
             AddEnergy(3f);
+        }
+
+        // Temporizador inicial durante el cual no se descarga energía
+        if (initialNoDrainTimer > 0f)
+        {
+            initialNoDrainTimer -= Time.deltaTime;
+            if (initialNoDrainTimer <= 0f)
+                initialNoDrainTimer = 0f;
+
+            // Actualizamos la UI mientras dure el periodo inicial
+            UpdateSlider();
+            return;
         }
 
         if (!IsOn || drainPaused)

@@ -4,6 +4,8 @@ Shader "Custom/BurnShader"
     {
         [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
+        _EmissionMap("Emission Map", 2D) = "black" {}
+        [HDR] _EmissionColor("Emission Color", Color) = (1, 1, 1, 1)
 
         _DissolveMap("Dissolve Map", 2D) = "white" {}
         _DissolveAmount("Dissolve Amount", Range(0,1)) = 0
@@ -45,6 +47,9 @@ Shader "Custom/BurnShader"
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
 
+            TEXTURE2D(_EmissionMap);
+            SAMPLER(sampler_EmissionMap);
+
             TEXTURE2D(_DissolveMap);
             SAMPLER(sampler_DissolveMap);
 
@@ -52,6 +57,7 @@ Shader "Custom/BurnShader"
                 half4 _BaseColor;
                 float4 _BaseMap_ST;
                 float4 _DissolveMap_ST;
+                half4 _EmissionColor;
                 half _DissolveAmount;
                 half4 _DissolveColor;
                 half _DissolveEmission;
@@ -82,8 +88,11 @@ Shader "Custom/BurnShader"
 
                 color.rgb = lerp(_DissolveColor.rgb, color.rgb, edge);
 
-                half3 emission = _DissolveColor.rgb * _DissolveEmission * (1.0 - edge);
-                color.rgb += emission;
+                half3 dissolveEmission = _DissolveColor.rgb * _DissolveEmission * (1.0 - edge);
+                color.rgb += dissolveEmission;
+
+                half emissionMask = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, IN.uv).r;
+                color.rgb += _EmissionColor.rgb * emissionMask;
 
                 return color;
             }

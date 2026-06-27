@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public enum DamageType
 {
@@ -47,6 +48,9 @@ public class LighthouseHealth : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool showDebugMessages = true;
+
+    [Header("Fade")]
+    [SerializeField] private FadeIn fadeController;
 
     [SerializeField] private float currentHealth;
     [SerializeField] private bool isAlive = true;
@@ -217,6 +221,18 @@ public class LighthouseHealth : MonoBehaviour
         if (showDebugMessages)
         {
             Debug.Log("GAME OVER");
+        }
+
+        if (fadeController == null)
+            fadeController = FindObjectOfType<FadeIn>();
+
+        if (fadeController != null)
+        {
+            fadeController.StartFadeOutRestart();
+        }
+        else
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
 }
