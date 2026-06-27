@@ -9,13 +9,13 @@ public class MainMenuManager : MonoBehaviour
     public GameObject blackoutPanel;
 
     [Header("Audio Settings")]
-    public AudioSource bgmSource;       // El AudioSource que reproduce la música de fondo
-    public AudioSource sfxSource;       // El AudioSource para los efectos de sonido
-    public AudioClip transitionSound;   // El archivo de audio de la transición
+    public AudioSource bgmSource;       // Música de fondo
+    public AudioSource sfxSource;       // Efectos de sonido
+    public AudioClip transitionSound;   // Sonido de transición
 
-    void Start()
+    private void Start()
     {
-        // Al iniciar, el panel pasa de negro a transparente (alpha 0)
+        // Al iniciar, el panel pasa de negro a transparente
         LeanTween.alpha(blackoutPanel.GetComponent<RectTransform>(), 0f, 1f).setOnComplete(() =>
         {
             blackoutPanel.SetActive(false);
@@ -23,45 +23,65 @@ public class MainMenuManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Este es el método que debes llamar desde tu botón de "Jugar" o "Start"
+    /// Llamar desde el botón "Play".
     /// </summary>
     public void GoToScene(string sceneName)
     {
-        // Iniciamos la corrutina que maneja toda la secuencia
         StartCoroutine(TransitionRoutine(sceneName));
     }
 
-    private IEnumerator TransitionRoutine(string sceneName)
+    /// <summary>
+    /// Llamar desde el botón "Reset your game".
+    /// Borra todos los PlayerPrefs y recarga la escena actual.
+    /// </summary>
+    public void ResetGame()
     {
-        // 1. Reactivamos el panel para poder verlo oscurecerse
+        StartCoroutine(TransitionRoutine(SceneManager.GetActiveScene().name, true));
+    }
+
+    /// <summary>
+    /// Maneja la transición entre escenas.
+    /// </summary>
+    private IEnumerator TransitionRoutine(string sceneName, bool resetGame = false)
+    {
+        // Activamos el panel negro
         blackoutPanel.SetActive(true);
 
-        // 2. Calculamos la duración basados en lo que dura el sonido de transición
-        // Si no hay sonido asignado, por defecto durará 1 segundo.
+        // Duración de la transición
         float duration = (transitionSound != null) ? transitionSound.length : 1f;
 
-        // 3. Reproducimos el sonido de transición
+        // Reproducimos el sonido
         if (sfxSource != null && transitionSound != null)
         {
             sfxSource.PlayOneShot(transitionSound);
         }
 
-        // 4. Oscurecemos el panel gradualmente (llevamos el alpha a 1) en el tiempo que dura el sonido
+        // Fade a negro
         LeanTween.alpha(blackoutPanel.GetComponent<RectTransform>(), 1f, duration);
 
-        // 5. Bajamos el volumen de la música de fondo a 0 suavemente usando LeanTween.value
+        // Fade de la música
         if (bgmSource != null)
         {
-            LeanTween.value(gameObject, bgmSource.volume, 0f, duration).setOnUpdate((float vol) =>
-            {
-                bgmSource.volume = vol;
-            });
+            LeanTween.value(gameObject, bgmSource.volume, 0f, duration)
+                .setOnUpdate((float volume) =>
+                {
+                    bgmSource.volume = volume;
+                });
         }
 
-        // 6. Esperamos a que termine el tiempo de la transición (lo que dura el sonido)
+        // Esperamos a que termine la transición
         yield return new WaitForSeconds(duration);
 
-        // 7. Finalmente, cargamos la nueva escena
+        // Si es un reinicio, borramos toda la partida
+        if (resetGame)
+        {
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+
+            Debug.Log("Todos los PlayerPrefs han sido eliminados.");
+        }
+
+        // Cargamos la escena
         SceneManager.LoadScene(sceneName);
     }
 }
